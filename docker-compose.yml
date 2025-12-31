@@ -29,10 +29,7 @@ services:
       - mongodb
     ports:
       - "8888:3423"
-    entrypoint: ["/bin/sh", "-c", "chmod +x /wait-for-mongo.sh && /wait-for-mongo.sh mongodb epicbox epicboxpass epicbox && exec npm start"]
-    volumes:
-      - ./wait-for-mongo.sh:/wait-for-mongo.sh:ro
-
+    
   epicbox2:
     build:
       context: .
@@ -49,8 +46,6 @@ services:
     ports:
       - "8889:3423"
     entrypoint: ["/bin/sh", "-c", "chmod +x /wait-for-mongo.sh && /wait-for-mongo.sh mongodb epicbox epicboxpass epicbox && exec npm start"]
-    volumes:
-      - ./wait-for-mongo.sh:/wait-for-mongo.sh:ro
 
   nginx:
     image: nginx:alpine
