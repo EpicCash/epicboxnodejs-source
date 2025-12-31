@@ -578,94 +578,77 @@ const postSlate = (ws, json) => {
     addressto.domain = str.destination.domain;
     addressto.port = str.destination.port != null ? str.destination.port : 443;
 
+    // Prevent self-relay: if destination domain/port matches local, do not relay externally
     if(addressto.domain === config.epicbox_domain && addressto.port === config.epicbox_port){
-
-        //challenge is not required, we keep it for backward compatibility
+        // Local passthrough logic (unchanged)
         let signed_payload = JSON.stringify({str: json.str, challenge: "", signature: json.signature});
         let messageid = uid(32);
-        // insert slate to db
         collection.insertOne({
-                queue: addressto.publicKey,
-                made: false,
-                payload: Buffer.from(signed_payload),
-                replyto: json.from,
-                createdat: new Date(),
-                expiration: 86400000,
-                messageid: messageid
-
+            queue: addressto.publicKey,
+            made: false,
+            payload: Buffer.from(signed_payload),
+            replyto: json.from,
+            createdat: new Date(),
+            expiration: 86400000,
+            messageid: messageid
         }).catch((err)=>{
             console.error("Error insert to db", err);
         });
 
-        //check if receiver is online, then pass slate through for faster processing
         let receiver = clients_publicaddress[addressto.publicKey];
         if(receiver != undefined && receiver.process_slate == false && receiver.readyState === 1){
-
-                if(config.stats){
-                    statistics.slatesAttempt++;
-                }
-
-                let slate = {
-                    type: "Slate",
-                    from: json.from,
-                    str: json.str,
-                    signature: json.signature,
-                    challenge: "",
-                };
-
-                //TODO: cleanup version stuff, kick out old clients <2.0.0
-                if(receiver.epicboxver == "2.0.0" || receiver.epicboxver == "3.0.0"){
-                    slate.epicboxmsgid = messageid;
-                    slate.ver = receiver.epicboxver;
-                }else{
-                    collection.updateOne({ messageid:messageid }, { $set: { made:true } });
-                }
-
-                ws.send(JSON.stringify({type:"Ok"}));
-
-                receiver.send(JSON.stringify(slate));
-                receiver.process_slate = true;
-                console.log("Passthrough slate to", receiver.epicPublicAddress);
-                config.debugMessage ? console.log(slate) : null;
-
+            if(config.stats){
+                statistics.slatesAttempt++;
+            }
+            let slate = {
+                type: "Slate",
+                from: json.from,
+                str: json.str,
+                signature: json.signature,
+                challenge: "",
+            };
+            if(receiver.epicboxver == "2.0.0" || receiver.epicboxver == "3.0.0"){
+                slate.epicboxmsgid = messageid;
+                slate.ver = receiver.epicboxver;
+            }else{
+                collection.updateOne({ messageid:messageid }, { $set: { made:true } });
+            }
+            ws.send(JSON.stringify({type:"Ok"}));
+            receiver.send(JSON.stringify(slate));
+            receiver.process_slate = true;
+            console.log("Passthrough slate to", receiver.epicPublicAddress);
+            config.debugMessage ? console.log(slate) : null;
         }else{
             ws.send(JSON.stringify({type:"Ok"}));
         }
-
-    }else{
-
-        // forward tx to foreign epicbox
-        sock = new WebSocket("wss://" + addressto.domain +":"+ addressto.port);
-        sock.on('error', console.error);
-        sock.on('open', () => {
-            console.log("Connect "+ addressto.domain +":"+ addressto.port);
-        });
-        sock.on('message', (data) => {
-            try{
-                message = JSON.parse(data);
-                if(message.type === "Challenge") {
-                    let slate = {type: "PostSlate", from: json.from, to: json.to, str: json.str, signature: json.signature};
-                    sock.send(JSON.stringify(slate));
-                }
-
-                if( message.type === "Ok" ) {
-
-                    if(config.stats){
-                        statistics.slatesRelayedInHour++;
-                    }
-
-                    console.log("Sent to wss://"+ addressto.domain +":"+ addressto.port);
-                    ws.send(JSON.stringify({type:"Ok"}));
-                }
-
-            }catch(err){
-                console.error("Error forward slate to foreign epicbox", err);
-                ws.send(JSON.stringify({type: "Error", kind: "InvalidRequest", description: `Error forward slate to foreign epicbox. ToDomain: ${addressto.domain}:${addressto.port}, err: ${err}`}));
-            }
-
-        });
-
+        return; // Do not relay externally
     }
+
+    // Only relay to foreign epicbox domains
+    sock = new WebSocket("wss://" + addressto.domain +":"+ addressto.port);
+    sock.on('error', console.error);
+    sock.on('open', () => {
+        console.log("Connect "+ addressto.domain +":"+ addressto.port);
+    });
+    sock.on('message', (data) => {
+        try{
+            message = JSON.parse(data);
+            if(message.type === "Challenge") {
+                let slate = {type: "PostSlate", from: json.from, to: json.to, str: json.str, signature: json.signature};
+                sock.send(JSON.stringify(slate));
+            }
+            if( message.type === "Ok" ) {
+                if(config.stats){
+                    statistics.slatesRelayedInHour++;
+                }
+                console.log("Sent to wss://"+ addressto.domain +":"+ addressto.port);
+                ws.send(JSON.stringify({type:"Ok"}));
+            }
+        }catch(err){
+            console.error("Error forward slate to foreign epicbox", err);
+            ws.send(JSON.stringify({type: "Error", kind: "InvalidRequest", description: `Error forward slate to foreign epicbox. ToDomain: ${addressto.domain}:${addressto.port}, err: ${err}`}));
+        }
+    });
 }
 
 /*

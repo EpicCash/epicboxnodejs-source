@@ -52,15 +52,9 @@ services:
     restart: always
     ports:
       - "8443:443"
-    environment:
-      - NGINX_DOMAIN=epicbox.51pool.online
-      - NGINX_CERT_PATH=/etc/nginx/certs/fullchain.pem
-      - NGINX_KEY_PATH=/etc/nginx/certs/privkey.pem
     entrypoint: ["/bin/sh", "-c", "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
     volumes:
       - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
-      - ./certs/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
-      - ./certs/privkey.pem:/etc/nginx/certs/privkey.pem:ro
     depends_on:
       - epicbox1
       - epicbox2
