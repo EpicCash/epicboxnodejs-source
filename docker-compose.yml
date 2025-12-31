@@ -45,8 +45,7 @@ services:
       - mongodb
     ports:
       - "8889:3423"
-    entrypoint: ["/bin/sh", "-c", "chmod +x /wait-for-mongo.sh && /wait-for-mongo.sh mongodb epicbox epicboxpass epicbox && exec npm start"]
-
+      
   nginx:
     image: nginx:alpine
     container_name: nginx
