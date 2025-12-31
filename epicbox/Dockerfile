@@ -14,8 +14,8 @@ COPY . .
 # Copy default_config.json as config.json for app compatibility
 COPY default_config.json ./config.json
 
-# Ensure epicboxlib binary is executable
-RUN chmod +x ./epicboxlib/epicboxlib || true
+# Ensure all files in epicboxlib are executable
+RUN chmod -R +x ./epicboxlib
 
 # Install dependencies and build native modules
 RUN npm install --production
