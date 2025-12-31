@@ -1,3 +1,61 @@
+## Nginx Passthrough/Proxy Example
+
+To expose your Epicbox Docker service securely on your own domain, use a simple nginx reverse proxy. This allows you to use SSL and a custom domain name.
+
+### 1. Start Epicbox Docker with Custom Domain and Port
+
+```sh
+EPICBOX_DOMAIN=your-epicbox-domain.example NGINX_PORT=8888 docker compose up -d --build
+```
+
+### 2. Example nginx Reverse Proxy Configuration
+
+Place this in your nginx config (e.g., `/etc/nginx/sites-available/epicbox.conf`):
+
+```
+server {
+	server_name your-epicbox-domain.example www.your-epicbox-domain.example;
+
+	root /var/www/html/epicbox/;
+	index index.html index.htm;
+
+	location / {
+		proxy_set_header        Host $host;
+		proxy_set_header        X-Real-IP $remote_addr;
+		proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header        X-Forwarded-Proto $scheme;
+
+		proxy_pass http://YOUR_SERVER_IP:8888;
+		proxy_read_timeout  90;
+
+		# WebSocket support
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection "upgrade";
+	}
+
+	access_log /var/log/nginx/epicbox.access.log;
+	error_log /var/log/nginx/epicbox.error.log;
+
+	listen 443 ssl;
+	ssl_certificate /etc/letsencrypt/live/your-epicbox-domain.example/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/your-epicbox-domain.example/privkey.pem;
+	include /etc/letsencrypt/options-ssl-nginx.conf;
+	ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+```
+
+- Replace `your-epicbox-domain.example` with your actual domain.
+- Replace `YOUR_SERVER_IP` with your server’s public IP or Docker host IP.
+- Adjust SSL certificate paths as needed.
+
+### 3. Reload nginx
+
+```sh
+sudo nginx -s reload
+```
+
+Now, your domain will securely proxy to your Epicbox Docker service!
 # epicboxnodejs
 
 Epicbox Relay Server for Epic Cash, built with Node.js and Rust.
