@@ -1,3 +1,5 @@
+# Ensure git submodules are initialized and updated
+RUN git submodule update --init --recursive
 
 
 # ---- Builder Stage ----
