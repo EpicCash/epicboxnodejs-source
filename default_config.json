@@ -1,5 +1,5 @@
 {
-  "mongo_url": "mongodb://localhost:27017/epicbox",
+	"mongo_url": "mongodb://mongodb:27017/epicbox",
 	"mongo_dbName": "epicbox",
 	"mongo_collection_name": "slates",
 	"epicbox_domain": "epicbox.your-domain.com",

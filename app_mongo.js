@@ -48,7 +48,7 @@ const config = {
     challenge_interval: 60000,
     debugMessage: true,
     stats: false,
-
+    instance_id: process.env.EPICBOX_INSTANCE_ID || 0
 };
 let mongoclient = null;
 let collection = null;
@@ -80,57 +80,64 @@ setInterval(()=>{
 
 
 const requestListener = (req, res) => {
-      res.writeHead(200)
-      res.end(`<!DOCTYPE html>\n\
-        <html>\n\
-        <head>\n\
-        <title>Epicbox</title>\n\
-        <style>a:link {\n\
-          color: orange;\n\
-        } a:visited {\n\
-          color: orange;\n\
-        }</style>\n\
-        </head>\n\
-        <body style='background-color: #242222; color: lightgray; margin-left: 20px;''>\n\
-        \n\
-        <h1>Epicbox server</h1>\n\
-        <p>Protocol version ${protver}</p>\n\
-        <p>Asia, Australia - epicbox.hyperbig.com</p>\n\
-        <p>North America, South America - epicbox.epiccash.com</p>\n\
-        <p>US East Cost - epicbox.epicnet.us</p>\n\
-        <p>Africa, Europe - epicbox.fastepic.eu</p>\n\
-        <p>Europe - epicbox.51pool.online</p>\n\
-        <br>\n\
-        <p>More about Epic</p>\n\
-        <a href="https://epiccash.com" target="_blank">Epic Cash website</a>\n\
-        <br>\n\
-        <br>\n\
-            Required epic-wallet.toml settings.\n\
-        \n\
-        <pre>\n\
-        <code>\n\
-        \n\
-        [epicbox]\n\
-        epicbox_domain = 'epicbox.epiccash.com'\n\
-        epicbox_port = 443\n\
-        \n\
-        </code>\n\
-        </pre>\n\
-        <p> start listen: epic-wallet listen -m epicbox</p>\n\
-        <br>\n\
-        <h1>\n\
-        Epicbox Statistics from ${statistics.from.toUTCString()}:\n\
-        </h1>\n\
-        <h3>\n\
-        connections: ${statistics.connectionsInHour}<br>\n\
-        active connections: ${statistics.activeconnections}<br>\n\
-        subscribes: ${statistics.connectionsInHour}<br>\n\
-        received slates: ${statistics.slatesReceivedInHour}<br>\n\
-        relayed slates: ${statistics.slatesRelayedInHour}<br>\n\
-        sending slate attempts: ${statistics.slatesAttempt}<br>\n\
-        </h3>\n\
-        </body>\n\
-        </html>`);
+        res.writeHead(200);
+        // List of Epicbox endpoints to check
+        const endpoints = [
+            { label: "North America, South America", url: "https://epicbox.epiccash.com" },
+            { label: "US East Coast", url: "https://epicbox.epicnet.us" },
+            { label: "Epic Mobile Server", url: "https://epicbox.stackwallet.com" }
+        ];
+        const https = require('https');
+        let results = [];
+        let checked = 0;
+        endpoints.forEach((ep, idx) => {
+            https.get(ep.url, (resp) => {
+                let color = resp.statusCode === 200 ? 'green' : 'red';
+                results[idx] = `<span style='font-size:2em;color:${color};'>&#9679;</span> ${ep.label} - <a href='${ep.url}' style='color:orange;'>${ep.url}</a>`;
+                resp.resume();
+                checked++;
+                if (checked === endpoints.length) sendPage();
+            }).on('error', () => {
+                results[idx] = `<span style='font-size:2em;color:red;'>&#9679;</span> ${ep.label} - <a href='${ep.url}' style='color:orange;'>${ep.url}</a>`;
+                checked++;
+                if (checked === endpoints.length) sendPage();
+            });
+        });
+        function sendPage() {
+            res.end(`<!DOCTYPE html>
+                <html>
+                <head>
+                <title>Epicbox</title>
+                <style>a:link { color: orange; } a:visited { color: orange; }</style>
+                </head>
+                <body style='background-color: #242222; color: lightgray; margin-left: 20px;'>
+                <h1>Epicbox server (Instance ${config.instance_id})</h1>
+                <p>Protocol version ${protver}</p>
+                ${results.join('<br>')}
+                <br>
+                <p>More about Epic</p>
+                <a href="https://epiccash.com" target="_blank">Epic Cash website</a>
+                <br><br>
+                Required epic-wallet.toml settings.
+                <pre><code>
+                [epicbox]
+                epicbox_domain = 'epicbox.epiccash.com'
+                epicbox_port = 443
+                </code></pre>
+                <p> start listen: epic-wallet listen -m epicbox</p>
+                <br>
+                <h1>Epicbox Statistics from ${statistics.from.toUTCString()}:</h1>
+                <h3>
+                connections: ${statistics.connectionsInHour}<br>
+                active connections: ${statistics.activeconnections}<br>
+                subscribes: ${statistics.connectionsInHour}<br>
+                received slates: ${statistics.slatesReceivedInHour}<br>
+                relayed slates: ${statistics.slatesRelayedInHour}<br>
+                sending slate attempts: ${statistics.slatesAttempt}<br>
+                </h3>
+                </body>
+                </html>`);
+        }
 }
 
 /*

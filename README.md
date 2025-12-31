@@ -1,18 +1,47 @@
 # epicboxnodejs
-Epicbox Relay Server created with nodejs containing elements of rust, fast send, and updated epicbox protocol.
 
-Added app_mongo_many.js to run multiple instances under one domain. Each instance needs to use the same mongo database, and all instances use the fastsend method.
-For fastsend method only one instance must have config_many.json set with fast_send_master=true, slave IPs must be set in array fast_send_slaves.
-All instances must have the same epicbox domain and epicbox port set.
+Epicbox Relay Server for Epic Cash, built with Node.js and Rust.
 
-The instance with fast_send_master = true can work like a single epicbox ( like app_mongo.js ).
+## Docker Quick Start
 
-For each instance you must use a different config_many.json file ( set other local port, or fast_send_master = false etc. ) so to run epicbox use command:
+1. **Clone the repository and navigate to the project folder:**
+	```sh
+	git clone <repo-url>
+	cd epicboxnodejs-source
+	```
 
-node app_mongo_many.js config_many.json
+2. **Build and start all services with Docker Compose:**
+	```sh
+	docker compose up -d --build
+	```
 
-And for the next one:
+3. **Custom configuration via environment variables:**
+	You can override key settings at runtime:
+	```sh
+	EPICBOX_DOMAIN=my.domain.com NGINX_PORT=8888 docker compose up -d --build
+	```
+	- `EPICBOX_DOMAIN`: Sets the domain for epicbox services (default: epicbox.your-domain.com)
+	- `EPICBOX_PORT`: Sets the port for epicbox services (default: 443)
+	- `NGINX_PORT`: Sets the external port for nginx (default: 8080)
 
-node app_mongo_many.js config_many_slave1.json
+4. **Access the service:**
+	- Open `http://localhost:8080` (or your chosen NGINX_PORT) in your browser.
 
-Enjoy.
+5. **Scaling and failover:**
+	- Two epicbox instances are started by default (epicbox1 and epicbox2).
+	- nginx will automatically route requests to available instances.
+
+## Configuration Reference
+
+All major settings can be configured via environment variables or a `.env` file:
+
+```
+EPICBOX_DOMAIN=my.domain.com
+EPICBOX_PORT=443
+NGINX_PORT=8888
+```
+
+## Advanced
+
+- MongoDB, nginx, and epicbox instances are all managed via `docker-compose.yml`.
+- For custom setups, edit `docker-compose.yml` and `default_config.json` as needed.
