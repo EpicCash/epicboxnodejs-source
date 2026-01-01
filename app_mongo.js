@@ -39,8 +39,8 @@ const static_challenge = "7WUDtkSaKyGRUnQ22rE3QUXChV8DmA6NnunDYP4vheTpc";
 const clients_publicaddress = {};
 const config = {
     mongourl: "mongodb://127.0.0.1:27019",
-    epicbox_domain: "epicbox.epiccash.com",
-    epicbox_port: "443",
+    epicbox_domain: process.env.EPICBOX_DOMAIN || "epicbox.your-domain.com",
+    epicbox_port: process.env.EPICBOX_PORT || 443,
     localepicboxserviceport: "3423",
     pathtoepicboxlib: "./epicboxlib",
     db_name: "epicbox",
