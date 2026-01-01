@@ -121,8 +121,8 @@ const requestListener = (req, res) => {
                 Required epic-wallet.toml settings.
                 <pre><code>
                 [epicbox]
-                epicbox_domain = 'epicbox.epiccash.com'
-                epicbox_port = 443
+                epicbox_domain = '${config.epicbox_domain}'
+                epicbox_port = ${config.epicbox_port}
                 </code></pre>
                 <p> start listen: epic-wallet listen -m epicbox</p>
                 <br>
