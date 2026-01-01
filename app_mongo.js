@@ -684,21 +684,22 @@ const challengeInterval = () => {
 */
 const loadConfig = async(filePath) =>{
 
-    try{
 
+    try{
         let jsonData = fs.readFileSync(filePath, 'utf8');
         let data = JSON.parse(jsonData);
 
-        config.mongourl = data.mongo_url != undefined ? data.mongo_url : config.mongourl;
-        config.epicbox_domain = data.epicbox_domain != undefined ? data.epicbox_domain : config.epicbox_domain;
-        config.epicbox_port = data.epicbox_port != undefined ? data.epicbox_port : config.epicbox_port;
-        config.localepicboxserviceport = data.local_epicbox_service_port != undefined ? data.local_epicbox_service_port: config.localepicboxserviceport;
-        config.pathtoepicboxlib = data.path_to_epicboxlib_exec_file != undefined ? data.path_to_epicboxlib_exec_file : config.pathtoepicboxlib;
-        config.db_name = data.mongo_dbName != undefined ? data.mongo_dbName : config.db_name;
-        config.collection_name = data.mongo_collection_name != undefined ? data.mongo_collection_name : config.collection_name;
-        config.challenge_interval = data.challenge_interval != undefined ? data.challenge_interval : config.challenge_interval;
-        config.debugMessage = data.debug != undefined ? data.debug : config.debugMessage;
-        config.stats = data.stats != undefined ? data.stats : config.stats;
+        // Priority: ENV > config file > default
+        config.mongourl = process.env.MONGO_URL || data.mongo_url || config.mongourl;
+        config.epicbox_domain = process.env.EPICBOX_DOMAIN || data.epicbox_domain || config.epicbox_domain;
+        config.epicbox_port = process.env.EPICBOX_PORT || data.epicbox_port || config.epicbox_port;
+        config.localepicboxserviceport = process.env.LOCAL_EPICBOX_SERVICE_PORT || data.local_epicbox_service_port || config.localepicboxserviceport;
+        config.pathtoepicboxlib = process.env.PATH_TO_EPICBOXLIB_EXEC_FILE || data.path_to_epicboxlib_exec_file || config.pathtoepicboxlib;
+        config.db_name = process.env.MONGO_DBNAME || data.mongo_dbName || config.db_name;
+        config.collection_name = process.env.MONGO_COLLECTION_NAME || data.mongo_collection_name || config.collection_name;
+        config.challenge_interval = process.env.CHALLENGE_INTERVAL || data.challenge_interval || config.challenge_interval;
+        config.debugMessage = process.env.DEBUG !== undefined ? process.env.DEBUG === 'true' : (data.debug !== undefined ? data.debug : config.debugMessage);
+        config.stats = process.env.STATS !== undefined ? process.env.STATS === 'true' : (data.stats !== undefined ? data.stats : config.stats);
 
     } catch(err){
         console.error(err);
