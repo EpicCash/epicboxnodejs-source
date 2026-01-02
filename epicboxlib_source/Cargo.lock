@@ -1080,7 +1080,7 @@ dependencies = [
 
 [[package]]
 name = "epicboxlib"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "epicboxlib 1.0.1",
  "grin_secp256k1zkp",
@@ -1093,6 +1093,7 @@ dependencies = [
  "colored",
  "epic_wallet_libwallet",
  "failure",
+ "grin_secp256k1zkp",
  "log",
  "parking_lot 0.12.5",
  "rand 0.9.2",

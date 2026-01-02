@@ -168,5 +168,5 @@ __pycache__
 # === Rules for C++ development ===
 compile_commands.json
 
-epicbox_source/target
+epicboxlib_source/target
 config.json

@@ -1,5 +1,3 @@
-extern crate epicboxlib;
-
 use epicboxlib::error::{Error, ResultSingle};
 use epicboxlib::types::{EpicboxAddress, EpicboxError};
 use epicboxlib::utils::crypto::{verify_signature, Base58, Hex};
